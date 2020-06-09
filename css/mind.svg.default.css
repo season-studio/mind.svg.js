@@ -1,0 +1,137 @@
+/* 主组基础风格类 */
+.mind-main-basic { }
+
+/* 主容器风格类 */
+.mind-main-container {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    right: 0px;
+    bottom: 0px;
+    outline: none;
+}
+
+/* 主SVG元素风格类 */
+.mind-svg {
+    -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Chrome/Safari/Opera */
+    -khtml-user-select: none; /* Konqueror */
+    -moz-user-select: none; /* Firefox */
+    -ms-user-select: none; /* Internet Explorer/Edge */
+    user-select: none; /* Non-prefixed version, currently not supported by any browser */
+}
+
+/* 主题通用风格类 */
+.mind-topic {
+    fill: #eee;
+    fill-opacity: 0.3;
+    stroke: #438AC9;
+    stroke-opacity: 0.3;
+    stroke-dasharray: 3, 1;
+    stroke-width: 0.5px;
+}
+
+/* 主题连接线风格类 */
+.mind-line {
+    fill: none;
+    stroke: #1A2530;
+    stroke-width: 2px;
+}
+
+/* 文字通用基础风格类 */
+.mind-text-basic {
+    alignment-baseline: before-edge; 
+    dominant-baseline: text-before-edge;
+}
+
+/* 文字通用风格类 */
+.mind-text {
+    fill: #000;
+    font-size: 13px;
+}
+
+/* 主题组的通用基础风格类 */
+.mind-topic-group-basic {
+    outline: none;
+}
+
+/* 第0级主题风格类（根主题风格类） */
+.mind-topic-level0 .mind-topic {
+    fill: #438AC9;
+    fill-opacity: 0.9;
+    stroke: #4472C4;
+    stroke-opacity: 0.6;
+    stroke-width: 1.5px;
+    stroke-dasharray: none;
+}
+
+/* 第0级主题文字风格类（根主题文字风格类） */
+.mind-topic-level0 .mind-text {
+    fill: #fff;
+    font-weight: bold;
+    font-size: 17px;
+}
+
+/* 第1级主题风格类 */
+.mind-topic-level1 .mind-topic {
+    fill: #438AC9;
+    fill-opacity: 0.3;
+    stroke: #438AC9;
+    stroke-opacity: 0.6;
+    stroke-width: 1px;
+    stroke-dasharray: none;
+}
+
+/* 第1级主题文字风格类 */
+.mind-topic-level1 .mind-text {
+    fill: #000;
+    font-weight: bold;
+    font-size: 13px;
+}
+
+/* 焦点下的主题风格 */
+.mind-topic-focus .mind-topic {
+    fill:#ff0;
+    fill-opacity: 0.8;
+}
+
+/* 焦点下的文字风格类 */
+.mind-topic-focus .mind-text {
+    fill: #000;
+    font-weight: normal;
+}
+
+/* 标签字体风格类 */
+.mind-topic-labels .mind-text {
+    fill: #000;
+    font-weight: normal;
+    font-size: 10px;
+}
+
+/* 标签底纹的风格类 */
+.mind-topic-label-background {
+    fill:#ddd;
+    fill-opacity: 0.8;
+}
+
+/* 拖拽盒的风格类 */
+.mind-topic-drag-box {
+    border: 3px dashed rgba(0, 0, 0, 0.3);
+    border-radius: 6px;
+    padding: 6px;
+    background-color: #fff;
+    color: #000;
+    opacity: 0.7;
+    text-align: center;
+    margin: 0px 0px 0px 6px;
+    min-width: 46px;
+}
+
+/* 主题拖拽连接线风格类 */
+.mind-topic-drag-line {
+    fill: none;
+    stroke: #2c3e50;
+    stroke-width: 3px;
+    stroke-dasharray: 5, 5;
+    stroke-opacity: 0.6;
+}

@@ -1,0 +1,54 @@
+{
+  "name": "mind.svg.js",
+  "version": "0.6.3",
+  "description": "Display and operate MindMap using SVG in browser",
+  "main": ".dist/mind.svg.js",
+  "scripts": {
+    "build": "npm run lint && npm run pack",
+    "pack": "npx rollup -c .config/rollup.config.js",
+    "lint": "npx eslint ./src",
+    "fix": "npx eslint --fix ./src"
+  },
+  "keywords": [
+    "MindMap",
+    "SVG",
+    "js"
+  ],
+  "author": "season studio",
+  "license": "MIT",
+  "homepage": "https://github.com/season-studio/mind.svg.js",
+  "repository": {
+    "type" : "git",
+    "url" : "https://github.com/season-studio/mind.svg.js.git"
+  },
+  "bugs": {
+    "url": "https://github.com/season-studio/mind.svg.js/issues",
+    "email": "season_studio@outlook.com"
+  },
+  "eslintConfig": {
+    "extends": ".config/.eslintrc.json"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@babel/core": "^7.10.2",
+    "@babel/plugin-external-helpers": "^7.10.1",
+    "@babel/plugin-transform-runtime": "^7.10.1",
+    "@babel/polyfill": "^7.10.1",
+    "@babel/preset-env": "^7.10.2",
+    "@babel/runtime": "^7.10.2",
+    "@babel/runtime-corejs3": "^7.10.2",
+    "babel-eslint": "^10.1.0",
+    "eslint": "^7.2.0",
+    "eslint-config-standard": "^14.1.1",
+    "eslint-plugin-import": "^2.21.1",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-standard": "^4.0.1",
+    "rollup": "^2.14.0",
+    "rollup-plugin-babel": "^4.4.0",
+    "rollup-plugin-commonjs": "^10.1.0",
+    "rollup-plugin-filesize": "^9.0.0",
+    "rollup-plugin-node-resolve": "^5.2.0",
+    "rollup-plugin-terser": "^6.1.0"
+  }
+}

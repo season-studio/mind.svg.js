@@ -1,0 +1,77 @@
+<html>
+    <head>
+        <script src="../.dist/mind.svg.iife.min.js" type="text/javascript"></script>
+        <link href="../css/mind.svg.default.css" type="text/css" rel="stylesheet" />
+        <script type="text/javascript">
+            var mind = undefined;
+
+            const mindData = {
+                title: "Root Topic",
+                labels: ["This is a test"],
+                children: [{
+                    title: "first",
+                    children: [{
+                        title: "mail to authoer",
+                        href: "mailto:season_studio@outlook.com",
+                        markers: {
+                            priority: 1,
+                            task: "quarter"
+                        }
+                    }, {
+                        title: "download",
+                        labels: ["npm", "nodejs", "github", "clone"],
+                        markers: {
+                            priority: 9,
+                            task: "done"
+                        }
+                    }],
+                }, {
+                    title: "second",
+                    children: [{
+                        title: "feature",
+                        children: [{
+                            title: "showing mindmap"
+                        }, {
+                            title: "operating mindmap in script"
+                        }]
+                    }, {
+                        title: "limit",
+                        children: [{
+                            title: "visaul operation exclude dragging should be implemented by yourself"
+                        }]
+                    }]
+                }, {
+                    title: "starting with layout left",
+                    image: {
+                        src: "https://github.githubassets.com/images/modules/site/logos/node-logo.png",
+                        width: 126,
+                        height: 57
+                    },
+                    labels: [
+                        "hasImage?",
+                        "yes"
+                    ],
+                    notes: "goto nodejs",
+                    href: "https://nodejs.org/",
+                    direction: 1,
+                    children: [{
+                        title: "node.js"
+                    },{
+                        title: "ES2017",
+                        markers: {
+                            priority: 6
+                        }
+                    }]
+                }]
+            };
+
+            window.onload = function () {
+                mind = new MindSVG.MindSVG();
+                mind.show(mindData);
+                mind.config("draggable", true);
+            }
+        </script>
+    </head>
+    <body>
+    </body>
+</html>
