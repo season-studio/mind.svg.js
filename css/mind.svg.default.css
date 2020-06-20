@@ -9,6 +9,9 @@
     right: 0px;
     bottom: 0px;
     outline: none;
+    margin: 0px;
+    padding: 0px;
+    z-index: 0;
 }
 
 /* 主SVG元素风格类 */
@@ -98,7 +101,6 @@
 /* 焦点下的文字风格类 */
 .mind-topic-focus .mind-text {
     fill: #000;
-    font-weight: normal;
 }
 
 /* 标签字体风格类 */

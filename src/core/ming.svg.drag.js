@@ -2,6 +2,8 @@ import { Constants } from "./mind.svg.main";
 import * as Event from "./mind.svg.event";
 import * as Extend from "./mind.svg.extend";
 
+const EVENT = Event.Constants;
+
 // 拖拽事件记录变量的符号
 const SYMBOLE_DRAG_EVENT_LOG = Symbol("mind.svg.drag.event.log");
 
@@ -195,13 +197,21 @@ Extend.extendEventHandler("MindSVG", {
         const eventLog = dragEventLog(this);
         const button = (_event.which || (_event.button + 1));
         if ((button === 1) && eventLog.dragingTopic) {
+            // 隐藏拖拽盒与拖拽线
             const box = dragBox(this, eventLog);
             box.attr("style", "display: none;");
             dragLine(this, box).attr("style", "display:none;");
+            // 发送推拽确认事件，可用于应用层历史记录或者应用层阻止对某个拖拽的生效
+            const dragingTopic = eventLog.dragingTopic;
             const hoverTopic = eventLog.hoverTopic;
-            if (hoverTopic) {
+            const canDrop = this.fireEvent(EVENT.EVENT_CONFIRM_DRAG, {
+                thisTopic: dragingTopic,
+                originParent: dragingTopic.parent,
+                newParent: hoverTopic
+            }, true);
+            if (hoverTopic && canDrop) {
+                // 计算拖拽后的主题的布局方向
                 const ptY = _event.clientY;
-                const dragingTopic = eventLog.dragingTopic;
                 let isLeft = false;
                 if (hoverTopic.level === 0) {
                     if (_event.clientX < hoverTopic.itemZone.x) {
@@ -213,6 +223,7 @@ Extend.extendEventHandler("MindSVG", {
                 } else {
                     dragingTopic.direction(null);
                 }
+                // 计算拖拽后主题的临近兄弟主题
                 let prevSibling = undefined;
                 for (let sibling of hoverTopic.childrenTopics()) {
                     if (!dragingTopic.isSame(sibling) && (!isLeft || sibling.direction() === Constants.CONNECT_DIRECTION_LEFT)) {
@@ -224,12 +235,15 @@ Extend.extendEventHandler("MindSVG", {
                         }
                     }
                 }
+                // 完成拖放
                 prevSibling ? eventLog.dragingTopic.insertNextTo(prevSibling, false) 
                             : eventLog.dragingTopic.insertTo(eventLog.hoverTopic, true, false);
             }
+            dragingTopic.focus(true);
             eventLog.dragingTopic.visible = true;
             eventLog.dragingTopic = undefined;
             Event.handledEvent(_event);
+            this.fireEvent(EVENT.EVENT_END_DRAG);
         }
     }
 });

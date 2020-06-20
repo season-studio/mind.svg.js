@@ -1,4 +1,4 @@
-import { isENode } from "./mind.svg.node";
+import { isENode, ENode } from "./mind.svg.node";
 
 // 对象实例里的事件自动分发处理程序实例名称
 const SYMBOL_EVENT_DISPATCHER = Symbol("MindSVG.Event.Dispatcher");
@@ -22,7 +22,7 @@ const EVENT_REQUIRE_LAYOUT = "mindevent.require.layout";
 const EVENT_FOCUS_CHANGE = "mindevent.focus.change";
 
 // 查询附件
-const EVENT_QUERY_ATTACHMENT = "mindevent.focus.query.attachment";
+const EVENT_QUERY_ATTACHMENT = "mindevent.query.attachment";
 
 // 唤起链接
 const EVENT_INVOKE_LINK = "mindevent.invoke.link";
@@ -38,6 +38,12 @@ const EVENT_INVOKE_IMAGE = "mindevent.invoke.image";
 
 // 唤起扩展标记
 const EVENT_INVOKE_MARKERS = "mindevent.invoke.markers";
+
+// 拖拽等待确认
+const EVENT_CONFIRM_DRAG = "mindevent.confirm.drag";
+
+// 拖拽完成
+const EVENT_END_DRAG = "mindevent.end.drag";
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -94,6 +100,16 @@ function getEventHandlerMap(_constructor) {
 export function handledEvent(_event, _prevent = true) {
     _prevent && _event.preventDefault();
     _event.stopPropagation();
+}
+
+/**
+ * 检查事件是否来源于MindSVG组件
+ * @param {*} _event 
+ * @param {*} _mindSVG 
+ */
+export function fromMindSVG(_event, _mindSVG) {
+    const target = ENode().attach(_event.target);
+    return target && (target.isSVG || target.isSame(_mindSVG.container));
 }
 
 /**
@@ -213,6 +229,8 @@ export const Constants = {
     EVENT_FOCUS_CHANGE,
     EVENT_REQUIRE_LAYOUT,
     EVENT_QUERY_ATTACHMENT,
+    EVENT_CONFIRM_DRAG,
+    EVENT_END_DRAG,
     EVENT_INVOKE_IMAGE,
     EVENT_INVOKE_LABELS,
     EVENT_INVOKE_LINK,

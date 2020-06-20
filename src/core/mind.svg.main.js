@@ -178,7 +178,7 @@ class TopicItem {
             }
             const content = (this.content = _data);
             this.fireEvent = fireEvent.bind(content);
-            this.titleRect = content.firstDescendant(`rect.${CLASS_NAME.TOPIC_RECT}`);
+            this.titleRect = content.firstDescendant(TopicItem.titleSelector);
             this.titleText = content.firstDescendant(`text.${CLASS_NAME.TOPIC_TEXT}`);
             this.foldIcon = content.firstDescendant(`use.${CLASS_NAME.TOPIC_FOLD_ICON}`);
         } else if (isENode(_parent)) {
@@ -311,6 +311,41 @@ class TopicItem {
     }
 
     /**
+     * 获取内部项目的全局区域坐标信息
+     * @param {*} _item 
+     */
+    globalZone(_item) {
+        const selector = TopicItem[`${_item}Selector`];
+        if (selector) {
+            const node = this.content.firstDescendant(selector);
+            return node ? node.globalRect : undefined;
+        }
+        return undefined;
+    }
+
+    /**
+     * 获取内部项目相对于其他元素的坐标信息
+     * @param {*} _item 
+     * @param {*} _node 相对的元素，如果不传入该参数，则表示相对于MindSVG的容器元素
+     */
+    relativeZone(_item, _node) {
+        let node;
+        if (_item) {
+            const selector = TopicItem[`${_item}Selector`];
+            if (selector) {
+                node = this.content.firstDescendant(selector);
+            }
+        } else {
+            node = this.content;
+        }
+        if (node) {
+            const relNode = ENode().attach(_node) || node.parent(`div.${CLASS_NAME.MAIN_CONTAINER}`);
+            return relNode ? node.getRelativeRect(relNode) : undefined;
+        }
+        return undefined;
+    }
+
+    /**
      * 获取自定义数据
      */
     get [namedData("customData")]() {
@@ -342,11 +377,11 @@ class TopicItem {
      * 获取图片
      */
     get [namedData("image")]() {
-        const img = this.content.firstDescendant("image");
+        const img = this.content.firstDescendant(TopicItem.imageSelector);
         if (img) {
             const data = {};
             const attachment = img.data(DATA_EXTEND);
-            data.src = attachment ? attachment : img.attr("src");
+            data.src = attachment ? attachment : img.attr("href");
             const width = img.attr("width");
             width && (data.width = JSON.parse(width));
             const height = img.attr("height");
@@ -361,7 +396,7 @@ class TopicItem {
      */
     set [namedData("image")](_value) {
         if (_value && _value.src) {
-            const img = this.content.firstDescendant("image") || this.content.createSVGChild("image");
+            const img = this.content.firstDescendant(TopicItem.imageSelector) || this.content.createSVGChild(TopicItem.imageSelector);
             if (img) {
                 const attrs = {
                     [EVENT.ATTR_EVENT_STAMP]: STAMP_TOPIC_IMAGE
@@ -388,7 +423,7 @@ class TopicItem {
                 }
             }
         } else {
-            const img = this.content.firstDescendant("image");
+            const img = this.content.firstDescendant(TopicItem.imageSelector);
             img && img.remove();
         }
     }
@@ -443,8 +478,7 @@ class TopicItem {
     get [namedData("href")]() {
         const href = this.content.firstDescendant(TopicItem.linkSelector);
         if (href) {
-            const data = href.data(DATA_EXTEND);
-            return data ? data.origin : undefined;
+            return href.data(DATA_EXTEND);
         }
         return undefined;
     }
@@ -453,28 +487,15 @@ class TopicItem {
      * 设置链接
      */
     set [namedData("href")](_value) {
-        let noSet = true;
-        if (_value) {
-            const data = {
-                origin: _value,
-                real: _value.startsWith(ATTACHMENT_LINK_PREFIX)
-                        ? this.fireEvent(EVENT.EVENT_QUERY_ATTACHMENT, _value.substr(ATTACHMENT_LINK_PREFIX.length), "")
-                        : _value
-            };
-            data.real = data.real.trim();
-            if (data.real) {
-                const href = this.content.firstDescendant(TopicItem.linkSelector) || this.content.createSVGChild("use");
-                href.data(DATA_EXTEND, data);
-                href.attr({
-                    class: CLASS_NAME.TOPIC_LINK,
-                    href: `#${ID_ICON_LINK}`,
-                    [EVENT.ATTR_EVENT_STAMP]: STAMP_TOPIC_LINK
-                });
-                noSet = false;
-            }
-        }
-        
-        if (noSet) {
+        if (_value && (_value = String(_value).trim())) {
+            const href = this.content.firstDescendant(TopicItem.linkSelector) || this.content.createSVGChild("use");
+            href.data(DATA_EXTEND, _value);
+            href.attr({
+                class: CLASS_NAME.TOPIC_LINK,
+                href: `#${ID_ICON_LINK}`,
+                [EVENT.ATTR_EVENT_STAMP]: STAMP_TOPIC_LINK
+            });
+        } else {
             const href = this.content.firstDescendant(TopicItem.linkSelector);
             href && href.remove();
         }
@@ -727,13 +748,13 @@ class TopicItem {
             (underWidth > rectWidth) && (rectWidth = underWidth);
 
             // 如果有图片，则布局图片, 如果图片的大小比当前计算的标题区大小要小，则图片居中布局
-            const img = this.content.firstDescendant("image");
+            const img = this.content.firstDescendant(TopicItem.imageSelector);
             if (img) {
                 const { width:imgWidth, height:imgHeight } = img.rect;
                 let imgLeft = 0;
                 (imgWidth > rectWidth) ? (rectWidth = imgWidth) : (imgLeft = (rectWidth - imgWidth) / 2);
                 img.attr({
-                    transform: `translate(${imgLeft}, -${imgHeight})`,
+                    transform: `translate(${imgLeft}, -${imgHeight + subPaddingY})`,
                     x: null,
                     y: null
                 });
@@ -778,6 +799,8 @@ class TopicItem {
         }
     }
 
+    static imageSelector = "image";
+    static titleSelector = `rect.${CLASS_NAME.TOPIC_RECT}`;
     static linkSelector = `use.${CLASS_NAME.TOPIC_LINK}`;
     static notesSelector = `use.${CLASS_NAME.TOPIC_NOTES}`;
     static markersSelector = `g.${CLASS_NAME.TOPIC_MARKERS}`;
@@ -919,9 +942,12 @@ class Topic {
      * 获取父主题
      */
     get parent() {
-        const content = getPrivate(this).content;
-        const parentNode = content.parent(Topic.contentSelector);
-        return parentNode ? new Topic(parentNode) : undefined;
+        if (this.level > 0) {
+            const content = getPrivate(this).content;
+            const parentNode = content.parent(Topic.contentSelector);
+            return parentNode ? new Topic(parentNode) : undefined;
+        }
+        return undefined;
     }
 
     /**
@@ -995,6 +1021,24 @@ class Topic {
     }
 
     /**
+     * 获取内部项目的全局区域坐标信息
+     * @param {*} _item 
+     */
+    globalZone(_item) {
+        const item = getPrivate(this).item;
+        return item ? item.globalZone(_item) : undefined;
+    }
+
+    /**
+     * 获取内部项目相对于导图容器的坐标信息
+     * @param {*} _item 
+     */
+    relativeZone(_item) {
+        const item = getPrivate(this).item;
+        return item ? item.relativeZone(_item) : undefined;
+    }
+
+    /**
      * 获取主题的全区域坐标
      */
     get totalZone() {
@@ -1059,14 +1103,16 @@ class Topic {
                     }
                 }
             } else {
+                let count = 0;
                 for (let itemName in _key) {
                     const dataName = TopicItem.propertyName(itemName);
                     if (dataName) {
                         const itemValue = _key[itemName];
                         item[dataName] = itemValue;
+                        count ++;
                     }
                 }
-                this.fireEvent(EVENT.EVENT_REQUIRE_LAYOUT);
+                (count !== 0) && this.fireEvent(EVENT.EVENT_REQUIRE_LAYOUT);
             }
         }
         return this;
@@ -1152,7 +1198,9 @@ class Topic {
      * @param {*} _redraw true或者不传入该参数表示理解重绘画面；false表示不立即重绘画面；该参数用于对思维导图一次做多项变更时减少刷新
      */
     addNewChild(_data, _redraw = true) {
-        const topic = new Topic(_data || {title:Topic.DefaultTitle}, this.level + 1, getPrivate(this).childrenGroup);
+        const _value = _data ? (_data.title ? _data : Object.assign({title:Topic.DefaultTitle}, _data)) 
+                             : {title:Topic.DefaultTitle};
+        const topic = new Topic(_value, this.level + 1, getPrivate(this).childrenGroup);
         _redraw && this.fireEvent(EVENT.EVENT_REQUIRE_LAYOUT);
         return topic;
     }
@@ -1451,7 +1499,6 @@ export class MindSVG {
     
     constructor (_parent) {
         const inner = (this[PRIVATE_SYMBOL] = {
-            attachments: {},
             configs: {},
             rootTopic: undefined,
             container: ENode("div")
@@ -1491,14 +1538,6 @@ export class MindSVG {
         this.fold();
     }
 
-    // 响应查询附件
-    [namedHandler(EVENT.EVENT_QUERY_ATTACHMENT)](_event) {
-        const detail = _event.detail;
-        const attachment = this.attachment(detail.value);
-        console.log(EVENT.EVENT_QUERY_ATTACHMENT, detail);
-        attachment && (detail.result = attachment);
-    }
-
     // 响应在空白处点击
     [namedHandler("click")](_event) {
         // 清除焦点
@@ -1518,8 +1557,8 @@ export class MindSVG {
             if ((curWidth !== inner.containerWidth) || (curHeight !== inner.containerHeight)) {
                 inner.containerWidth = curWidth;
                 inner.containerHeight = curHeight;
-                curWidth *= inner.scaleRate;
-                curHeight *= inner.scaleRate;
+                curWidth /= inner.scaleRate;
+                curHeight /= inner.scaleRate;
                 inner.svg.attr("viewBox", `${inner.offsetX} ${inner.offsetY} ${curWidth} ${curHeight}`);
                 const event = document.createEvent("UIEvents");
                 event.initUIEvent("resize", false, true, window || global, this);
@@ -1564,8 +1603,8 @@ export class MindSVG {
         return {
             x: inner.offsetX, 
             y: inner.offsetY, 
-            width: (inner.containerWidth * inner.scaleRate), 
-            height: (inner.containerHeight * inner.scaleRate)
+            width: (inner.containerWidth / inner.scaleRate), 
+            height: (inner.containerHeight / inner.scaleRate)
         };
     }
 
@@ -1645,8 +1684,7 @@ export class MindSVG {
             if (_data) {
                 const rootTopic = (inner.rootTopic = new Topic(_data, 0, content));
                 rootTopic.layout(this, 0);
-                this.rootToCenter();
-                return rootTopic;
+                this.toCenter();
             }
         }
         return this;
@@ -1681,86 +1719,70 @@ export class MindSVG {
     }
 
     /**
-     * 获取附件集合
-     */
-    get attachments() {
-        return getPrivate(this).attachments;
-    }
-
-    /**
-     * 切换附件集合
-     * @param {Object} _newOne 新的附件集合
-     * @returns {Object} 切换之前旧的附件集合
-     */
-    swapAttachments(_newOne) {
-        if (_newOne) {
-            const inner = getPrivate(this);
-            const oldOne = inner.attachments;
-            inner.attachments = _newOne;
-            return oldOne;
-        }
-    }
-
-    /**
-     * 获取或设置附件内容
-     * @param {*} _name 附件的名称标识
-     * @param {*} _content 附件的内容，如果不传则表示获取附件，如果传入null表示删除附件
-     */
-    attachment(_name, _content) {
-        const attachments = getPrivate(this, "attachments");
-        if (attachments) {
-            if (_content === undefined) {
-                return attachments[_name];
-            } else if (_content === null) {
-                delete attachments[_name];
-            } else {
-                attachments[_name] = _content;
-            }
-        }
-        return this;
-    }
-
-    /**
      * 获取或设置配置
-     * @param {*} _name 配置项名称，如果不传入则获取所有配置项的结合对象
+     * @param {*} _nameOrMap 配置项名称，如果不传入则获取所有配置项的结合对象
      * @param {*} _value 配置项的值，如果不传入则表示获取配置项、如果传入null表示删除配置项（用默认值）、否则表示设置配置项
      */
-    config(_name, _value) {
-        const configs = getPrivate(this, "configs");
-        if (configs) {
-            if (_name === undefined) {
-                return Object.assign({}, configs);
-            } else if (_value === undefined) {
-                return configs[_name];
+    config(_nameOrMap, _value) {
+        if (_nameOrMap === undefined) {
+            return Object.assign({}, getPrivate(this).configs);
+        } else if (typeof _nameOrMap === "string") {
+            const configs = getPrivate(this, "configs");
+            if (_value === undefined) {
+                return configs[_nameOrMap];
             } else if (_value === null) {
-                configs[_name] = DEFAULT_CONFIGS[_name];
+                configs[_nameOrMap] = DEFAULT_CONFIGS[_nameOrMap];
             } else {
-                configs[_name] = _value;
+                configs[_nameOrMap] = _value;
+            }
+        } else {
+            for (let itemName in _nameOrMap) {
+                this.config(String(itemName), _nameOrMap[itemName]);
             }
         }
         return this;
     }
 
     /**
-     * 将根元素放置到视图的中间
+     * 将整个画布或指定的主题放到视图的中间
      */
-    rootToCenter() {
+    toCenter(_topic) {
         const inner = getPrivate(this);
         if (inner.svg && this.content) {
-            const curWidth = inner.containerWidth * inner.scaleRate;
-            const curHeight = inner.containerHeight * inner.scaleRate;
+            const curWidth = inner.containerWidth / inner.scaleRate;
+            const curHeight = inner.containerHeight / inner.scaleRate;
             const totalBox = this.content.rect;
-            const root = inner.svg.firstDescendant(`g.${CLASS_NAME.TOPIC_LEVEL_PREFIX}0`);
-            const rootBox = (root ? root.rect : {width:0, height:0});
-            if (totalBox.width < curWidth) {
-                inner.offsetX = totalBox.x - ((curWidth - totalBox.width) / 2);
+            if (_topic instanceof Topic) {
+                const topicBox = _topic.titleZone;
+                inner.offsetX = parseInt(topicBox.x - ((curWidth - topicBox.width) / 2));
+                inner.offsetY = parseInt(topicBox.y - ((curHeight - topicBox.height) / 2));
             } else {
-                inner.offsetX = parseInt(0 - ((curWidth - rootBox.width) / 2));
-            }
-            if (totalBox.height < curHeight) {
-                inner.offsetY = totalBox.y - ((curHeight - totalBox.height) / 2);
-            } else {
-                inner.offsetY = parseInt(0 - ((curHeight - rootBox.height) / 2));
+                const topicNode = inner.svg.firstDescendant(`g.${CLASS_NAME.TOPIC_LEVEL_PREFIX}0`);
+                const topicBox = (topicNode ? topicNode.rect : {width:0, height:0});
+                if (totalBox.width < curWidth) {
+                    inner.offsetX = totalBox.x - ((curWidth - totalBox.width) / 2);
+                } else {
+                    let offset = parseInt(0 - ((curWidth - topicBox.width) / 2));
+                    if (totalBox.x > offset) {
+                        inner.offsetX = totalBox.x;
+                    } else if ((curWidth + offset) > (totalBox.width + totalBox.x)) {
+                        inner.offsetX = totalBox.width + totalBox.x - curWidth;
+                    } else {
+                        inner.offsetX = offset;
+                    }
+                }
+                if (totalBox.height < curHeight) {
+                    inner.offsetY = totalBox.y - ((curHeight - totalBox.height) / 2);
+                } else {
+                    let offset = parseInt(0 - ((curHeight - topicBox.height) / 2));
+                    if (totalBox.y > offset) {
+                        inner.offsetY = totalBox.y;
+                    } else if ((curHeight + offset) > (totalBox.height + totalBox.y)) {
+                        inner.offsetY = totalBox.height + totalBox.y - curHeight;
+                    } else {
+                        inner.offsetY = offset;
+                    }
+                }
             }
             inner.svg.attr("viewBox", `${inner.offsetX} ${inner.offsetY} ${curWidth} ${curHeight}`);
         }
@@ -1776,8 +1798,8 @@ export class MindSVG {
         const inner = getPrivate(this);
         if (inner.svg) {
             // 如果容器的大小发生变化，则同步修正SVG的视口
-            let curWidth = inner.containerWidth * inner.scaleRate;
-            let curHeight = inner.containerHeight * inner.scaleRate;
+            let curWidth = inner.containerWidth / inner.scaleRate;
+            let curHeight = inner.containerHeight / inner.scaleRate;
             inner.offsetX = _x;
             inner.offsetY = _y;
             inner.svg.attr("viewBox", `${inner.offsetX} ${inner.offsetY} ${curWidth} ${curHeight}`);
@@ -1794,8 +1816,8 @@ export class MindSVG {
         const inner = getPrivate(this);
         if (inner.svg) {
             // 如果容器的大小发生变化，则同步修正SVG的视口
-            let curWidth = inner.containerWidth * inner.scaleRate;
-            let curHeight = inner.containerHeight * inner.scaleRate;
+            let curWidth = inner.containerWidth / inner.scaleRate;
+            let curHeight = inner.containerHeight / inner.scaleRate;
             _deltaX = parseInt(_deltaX);
             _deltaY = parseInt(_deltaY);
             if (!isNaN(_deltaX)) {
@@ -1819,11 +1841,8 @@ export class MindSVG {
             // 如果容器的大小发生变化，则同步修正SVG的视口
             _r = parseFloat(_r);
             if (!isNaN(_r)) {
-                inner.scaleRate *= _r;
+                this.scale(inner.scaleRate * _r);
             }
-            let curWidth = inner.containerWidth * inner.scaleRate;
-            let curHeight = inner.containerHeight * inner.scaleRate;
-            inner.svg.attr("viewBox", `${inner.offsetX} ${inner.offsetY} ${curWidth} ${curHeight}`);
         }
         return this;
     }
@@ -1837,12 +1856,35 @@ export class MindSVG {
         if (inner.svg) {
             // 如果容器的大小发生变化，则同步修正SVG的视口
             _r = parseFloat(_r);
-            inner.scaleRate = isNaN(_r) ? 1 : _r;
-            let curWidth = inner.containerWidth * _r;
-            let curHeight = inner.containerHeight * _r;
-            inner.svg.attr("viewBox", `${inner.offsetX} ${inner.offsetY} ${curWidth} ${curHeight}`);
+            if (!isNaN(_r)) {
+                let deny = (!isNaN(inner.configs.maxScale)) && (_r > inner.configs.maxScale);
+                deny = deny || ((!isNaN(inner.configs.minScale)) && (_r < inner.configs.minScale));
+                if (!deny) {
+                    inner.scaleRate = _r;
+                    let curWidth = inner.containerWidth / _r;
+                    let curHeight = inner.containerHeight / _r;
+                    inner.svg.attr("viewBox", `${inner.offsetX} ${inner.offsetY} ${curWidth} ${curHeight}`);
+                }
+            }
+            
         }
         return this;
+    }
+
+    /**
+     * 获取缩放率
+     */
+    get scaleRate() {
+        const inner = getPrivate(this);
+        return inner ? inner.scaleRate : 1;
+    }
+
+    /**
+     * 获取画布的统一偏移
+     */
+    get offset() {
+        const inner = getPrivate(this);
+        return inner ? {x: inner.offsetX, y: inner.offsetY} : {x:0, y:0};
     }
 
     /**
@@ -1904,6 +1946,30 @@ export class MindSVG {
         }
         return undefined;
     }
+
+    /**
+     * 生成获取所有预定义元素的迭代器
+     */
+    * getDefs() {
+        const svg = getPrivate(this).svg;
+        if (svg) {
+            for (const section of svg.getDescandant("defs")) {
+                for (const item of section.getChildren()) {
+                    const itemID = item.attr("id");
+                    if (itemID) {
+                        let {0:itemName, 1:itemValue} = itemID.split("-");
+                        let fn = Defs[`${itemName}$translate`];
+                        (typeof fn === 'function') && (itemValue = fn(itemValue));
+                        yield {
+                            type: itemName,
+                            value: itemValue,
+                            node: item.node
+                        };
+                    }
+                }
+            }
+        }
+    }
 }
 
 // 注册可扩展类
@@ -1913,6 +1979,8 @@ Extend.registryClass({ MindSVG, Topic, TopicItem, Defs, DEFAULT_CONFIGS });
  * 导出标准常量
  */
 export const Constants = {
+    ATTACHMENT_LINK_PREFIX,
+
     STAMP_TOPIC_TITLE,
     STAMP_FOLD_ICON,
     STAMP_TOPIC_IMAGE,

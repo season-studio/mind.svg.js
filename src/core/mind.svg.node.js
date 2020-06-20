@@ -23,6 +23,22 @@ export function isNode(_node) {
 }
 
 /**
+ * 获取CSS的数值部分
+ * @param {*} _value 
+ */
+function cssNumber(_value) {
+    return Number((typeof _value === "string" ? _value : String(_value)).replace(/\D+/, ""));
+}
+
+/**
+ * 获取CSS的单位部分
+ * @param {*} _value 
+ */
+function cssUnit(_value) {
+    return (typeof _value === "string" ? _value : String(_value)).replace(/\d+/, "");
+}
+
+/**
  * 封装Node操作的类
  */
 export class ENodeClass {
@@ -167,7 +183,7 @@ export class ENodeClass {
     /**
      * 获取元素内部的矩形空间
      */
-    get clinetRect() {
+    get clientRect() {
         const node = this.node;
         return this.isSVG   ? node.getBBox() 
                             : { x: node.clientLeft, 
@@ -217,11 +233,27 @@ export class ENodeClass {
                     box.height = originRect.height;
                 }
             } else {
-                box.x -= relNode.left;
-                box.y -= relNode.top;
+                const relGlobalRect = relNode.globalRect;
+                box.x -= relGlobalRect.x - relNode.node.clientLeft;
+                box.y -= relGlobalRect.y - relNode.node.clientTop;
             }
         }
         return box;
+    }
+
+    /**
+     * 设置纯HTML元素的STYLE中的大小
+     * @param {*} _width 宽度
+     * @param {*} _height 高度
+     */
+    setSizeInStyle(_width, _height) {
+        const css = window.getComputedStyle ? window.getComputedStyle(this.node) : undefined;
+        if (css) {
+            _width -= cssNumber(css.paddingLeft) + cssNumber(css.paddingRight) + cssNumber(css.borderLeftWidth) + cssNumber(css.borderRightWidth);
+            _height -= cssNumber(css.paddingTop) + cssNumber(css.paddingBottom) + cssNumber(css.borderTopWidth) + cssNumber(css.borderBottomWidth);
+        }
+        this.node.style.width = `${_width}px`;
+        this.node.style.height = `${_height}px`;
     }
 
     /**

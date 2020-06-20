@@ -5,6 +5,7 @@ import * as $Event from "./core/mind.svg.event";
 export * from "./core/mind.svg.util";
 import "./core/ming.svg.drag";
 import "./core/mind.svg.stddefs";
+export * from "./core/mind.svg.attachment";
 
 export const EVENT = $Event.Constants;
 export const Event = $Event;
